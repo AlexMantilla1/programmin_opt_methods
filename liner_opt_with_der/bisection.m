@@ -35,8 +35,7 @@ matriz(1,:) = [1 interval(1) interval(2) lambda f_t(lambda) fd_t(lambda)];
 for k = 1:n
     % Calculate lambda y derivate
     lambda = (interval(2) + interval(1))/2;
-    fd_t_lambda = fd_t(lambda);
-    
+    fd_t_lambda = fd_t(lambda); 
     
     if ( fd_t_lambda == 0 ) % The opt point!
         interval = [fd_t_lambda fd_t_lambda];

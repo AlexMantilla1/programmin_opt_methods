@@ -6,8 +6,8 @@ clc; clear all; close all;
 %f_t2 = @(t) 4*(t.^3) - 3*(t.^4);    % if t >= 0
 f_t1 = @(t) 4*(t.^3) + 3*(t.^4);    % if t < 0
 
-fd1_t1 = @(t) 12*(t^2) + 12*(t^3);
-fd2_t1 = @(t) 24*(t) + 36*(t^2);
+fd1_t1 = @(t) 12*(t.^2) - 12*(t.^3);
+fd2_t1 = @(t) 24*(t) - 36*(t.^2);
 paso = 0.001;
 t = -3:paso:3;
 f = f_t1(t);
@@ -46,9 +46,7 @@ for k = 1:n
         interval = [new_lambda lambda]; 
     else
         interval = [lambda new_lambda]; 
-    end
-    
-
+    end 
 
     %matriz(k+1,:) = [k+1 interval(1) interval(2) lambda f_t(lambda) fd_t(lambda)];
     
@@ -67,10 +65,8 @@ for k = 1:n
     end
 
     % Just to check, print the length of the interval
-    fprintf("%d: The length of the interva is: %f\n",k, interval(2) - interval(1));
-
-
-
+    fprintf("%d: The length of the interva is: %f\n",k, interval(2) - interval(1)); 
+    
     % Check to Finish
     if abs( new_lambda - lambda ) < epsilon 
         break;
