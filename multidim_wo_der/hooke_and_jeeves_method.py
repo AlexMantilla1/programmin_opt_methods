@@ -1,6 +1,9 @@
 from typing import Callable
 import numpy as np
 import numpy.typing as npt
+# Import my functionalities:
+import sys
+sys.path.append("../useful_python_scripts/")
 from golden_section_method_Rn import get_solution_by_golden_section_method
 from useful_plots import plot_level_curves_and_points
 
@@ -62,7 +65,7 @@ def hooke_and_jeeves_method(
             # Move the point the dir_index dimention by the opt solution found
             new_point[dir_index] += solution["value"]
             # Add the point to the trayectory
-        all_points_trayectory.append(new_point.copy())
+            all_points_trayectory.append(new_point.copy())
             
         # End the algorithm if the magnitude of the difference is lower that epsilon
         magnitude: float = np.linalg.norm(new_point - last_point)

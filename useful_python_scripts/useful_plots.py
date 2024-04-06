@@ -1,9 +1,12 @@
+from typing import Callable
 import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
 
 
-def plot_level_curves_and_points(trayectory: npt.ArrayLike, fun) -> None:
+def plot_level_curves_and_points(
+    trayectory: npt.ArrayLike, fun: Callable[[npt.ArrayLike], float]
+) -> None:
     # Get the x and y values from the trayectory
     points_x = [point[0] for point in trayectory]
     points_y = [point[1] for point in trayectory]

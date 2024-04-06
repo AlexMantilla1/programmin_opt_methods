@@ -1,21 +1,22 @@
-from typing import Callable, Dict, List
+from typing import Callable, Dict
 import numpy as np
-import numpy.typing as npt
+import numpy.typing as npt 
+# Import my functionalities:
+import sys
+sys.path.append("../useful_python_scripts/") 
 from golden_section_method_Rn import get_solution_by_golden_section_method
 from useful_plots import plot_level_curves_and_points
-
-
+from derivative_funcitons import gradient_of_fun_in_point, hessian_matrix
+ 
 """
 
 """
 
-def steepest_decent_method(
+def newton_method(
     epsilon: float,
     initial_point: npt.ArrayLike,
-    obj_function: Callable[[npt.ArrayLike], float],
-    grad_function: Callable[[npt.ArrayLike], npt.ArrayLike], 
-    max_iter: int = 500,
-    max_step: float = 10.0,
+    obj_function: Callable[[npt.ArrayLike], float], 
+    max_iter: int = 500, 
 ) -> Dict:
     """
     Steepest Decent Method.
@@ -37,44 +38,34 @@ def steepest_decent_method(
     last_point: npt.ArrayLike = initial_point.copy()
     all_points_trayectory = [initial_point]
 
-    while iterations < max_iter:
-
-        iterations += 1
-        # 1. Exploratory search
+    while iterations < max_iter: 
+        # Define the new_point with initial value
         new_point: npt.ArrayLike = last_point.copy()
         # Calculate the gradient in the point
-        gradient: npt.ArrayLike = grad_function(new_point)
-        # End the algorithm if the magnitude of the gradient is lower that epsilon
-        magnitude: float = np.linalg.norm(gradient)
+        gradient: npt.ArrayLike = gradient_of_fun_in_point(obj_function,new_point)
+        # Calculate the hessian matrix of the fun in the point
+        hessian: npt.ArrayLike = hessian_matrix(obj_function, new_point)
+        # Calculate the inverse of that matrix
+        inv_hessian: npt.ArrayLike = np.linalg.inv(hessian)
+        # Calculate the next movement of the point
+        new_mov: npt.ArrayLike = np.matmul(gradient,inv_hessian)
+        # End the algorithm if the magnitude of the new movement is lower that epsilon
+        magnitude: float = np.linalg.norm(new_mov)
         if magnitude < epsilon:
             break
-        # If gradient is large enough define the direction of the gradient
-        direction: npt.ArrayLike = (-1.0/magnitude)*gradient
-        # Perform golden section search along this direction
-        solution: Dict = get_solution_by_golden_section_method(
-            epsilon / 4,
-            [-max_step, max_step],
-            obj_function,
-            new_point,
-            direction,
-        )
-        print(solution["value"])
-        # Check if solution was found
-        if not solution["converged"]:
-            solution["trayectory"] = all_points_trayectory
-            return solution
         # Move the point the dir_index dimention by the opt solution found
-        new_point = new_point + solution["value"]*direction
+        new_point = new_point - new_mov
         # Add the point to the trayectory
-        all_points_trayectory.append(new_point.copy())
-
+        all_points_trayectory.append(new_point.copy()) 
         # update for next hooke_and_jeeves iteration
         last_point = new_point.copy()
+        # cont the iteration
+        iterations += 1
 
     # Check if max iterations achieved
     is_good_sol: bool = iterations < max_iter
     return {
-        "value": new_point,
+        "value": last_point,
         "converged": is_good_sol,
         "iterations": iterations,
         "trayectory": all_points_trayectory,
@@ -90,17 +81,6 @@ def function_R2(x: npt.ArrayLike) -> float:
     x2 = x[1]
     return (x1 - 2) ** 4 + (x1 - (2 * x2)) ** 2
 
-def gradent_of_function_R2(x: npt.ArrayLike) -> npt.ArrayLike:
-    """
-    Example function to test.
-    For f: R2 -> R
-    """
-    x1 = x[0]
-    x2 = x[1]
-    der_in_x = 2*( 2*(x1 - 2)**3 + x1 - 2*x2 )
-    der_in_y = 8*x2 - 4*x1
-    return np.array( [der_in_x, der_in_y] )
-
 
 def function_R2_b(x: npt.ArrayLike) -> float:
     """
@@ -113,16 +93,14 @@ def function_R2_b(x: npt.ArrayLike) -> float:
 
 def main() -> None:
     # Define a termination scalar, to define the threshold of how much is close enough for the solution
-    epsilon: float = 0.001
+    epsilon: float = 0.05
     # Define an arbitrary point
     # initial_point: npt.ArrayLike = np.array([-2.1, 7.0])
     initial_point: npt.ArrayLike = np.array([0.0, 3.0])
     # The function to minize:
-    fun = function_R2
-    # The derivative function of the function to minize:
-    grad_fun = gradent_of_function_R2
+    fun = function_R2 
     # Call the function for cyclic coordinate algorithm using golden section method.
-    solution: Dict = steepest_decent_method(epsilon, initial_point, fun, grad_fun)
+    solution: Dict = newton_method(epsilon, initial_point, fun)
     # Just print solution
     print(f"The solution is: {solution["value"]}")
     # Print the trayectory length
@@ -134,3 +112,11 @@ def main() -> None:
     
 if __name__ == "__main__":
     main()
+    """grad = np.array([-44, 24])
+    #grad = grad[:, np.newaxis]
+    print(grad)
+    inv_hass = np.array([ [8, 4], [4, 50]])  # Example input matrix
+    inv_hass = (1/384)*inv_hass
+    print(inv_hass)
+    test = np.matmul(grad,inv_hass)
+    print(test)"""

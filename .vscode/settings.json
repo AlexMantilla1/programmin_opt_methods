@@ -1,0 +1,3 @@
+{
+  "python.analysis.extraPaths": ["./useful_python_scripts"]
+}
