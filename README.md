@@ -1,7 +1,7 @@
-# Your Project Name
+# Programming optimization algorithms
 
 ## Overview
-Briefly describe your project here.
+This reposotory have some implementations for numerical methods to calculate minimum value of linear and multidimentional functions.
 
 ## Setup
 Follow the steps below to set up your development environment.
@@ -16,13 +16,13 @@ python3 -m venv venv
 ```
 4. Activate the virtual environment:
     - On Windows:
-```bash
-venv\Scripts\activate
-```
+        ```bash
+        venv\Scripts\activate
+        ```
     - On macOS and Linux:
-```bash
-source venv/bin/activate
-```
+        ```bash
+        source venv/bin/activate
+        ```
 
 
 
