@@ -3,6 +3,81 @@ import numpy as np
 import numpy.typing as npt
 
 
+def forward_substitution(L, b):
+    """
+    Solves the linear system Lx = b for x using forward substitution,
+    where L is a lower triangular matrix.
+    """
+    n = L.shape[0]
+    x = np.zeros_like(b, dtype=float)
+    for i in range(n):
+        x[i] = (b[i] - np.dot(L[i, :i], x[:i])) / L[i, i]
+    return x
+
+
+def backward_substitution(U, b):
+    """
+    Solves the linear system Ux = b for x using backward substitution,
+    where U is an upper triangular matrix.
+    """
+    n = U.shape[0]
+    x = np.zeros_like(b, dtype=float)
+    for i in range(n - 1, -1, -1):
+        x[i] = (b[i] - np.dot(U[i, i + 1 :], x[i + 1 :])) / U[i, i]
+    return x
+
+
+def calc_dominant_eigenvalue_of_matrix(
+    input_matrix: npt.ArrayLike, tol: float, max_iter: int = 20
+) -> float:
+    # define arbitrary starting value
+    eigenvalue: float = 0.0
+    x_vec: npt.ArrayLike = np.array([1.0] + ((len(input_matrix) - 1) * [0.0]))
+
+    while True:
+        x_vec_new: npt.ArrayLike = np.matmul(test_matrix, x_vec)
+        eigenvalue_new: float = np.dot(x_vec, x_vec_new) / np.dot(x_vec, x_vec)
+        if abs(eigenvalue_new - eigenvalue) < tol:
+            break
+        eigenvalue = eigenvalue_new
+        x_vec = x_vec_new.copy()
+
+    return eigenvalue
+
+
+def calculate_new_D_matrix(
+    D_matrix: npt.ArrayLike, p_j: npt.ArrayLike, q_j: npt.ArrayLike
+) -> npt.ArrayLike:
+    """
+    Calculate the updated D matrix for the Davidson-Fletcher-Powell (DFP) multivariable optimization method.
+
+    Parameters:
+    - D_matrix (array-like): The current D matrix, a symmetric positive definite matrix.
+    - p_j (array-like): The change in the parameters vector between iterations.
+    - q_j (array-like): The change in the gradient vector between iterations.
+
+    Returns:
+    - new_D_matrix (array-like): The updated D matrix after applying the DFP method.
+    """
+
+    # First term to add
+    first_num = np.outer(p_j, p_j)  # matrix
+    first_den = np.dot(p_j, q_j)  # scalar
+    first = (1 / first_den) * first_num  # matrix
+
+    # Second term to add
+    second_num_a = np.matmul(D_matrix, q_j)  # vector
+    second_num_b = np.matmul(q_j, D_matrix)  # vector
+    second_num = np.outer(second_num_a, second_num_b)  # matrix
+    second_den = np.matmul(second_num_a, q_j)  # scalar
+    second = (1 / second_den) * second_num  # matrix
+
+    # Adding to calculate new D matrix
+    new_D_matrix = D_matrix + first - second  # matrix
+
+    return new_D_matrix
+
+
 def derivate_fun_in_point_and_dir(
     fun: Callable[[npt.ArrayLike], float],
     point: npt.ArrayLike,
@@ -135,3 +210,11 @@ if __name__ == "__main__":
     point = np.array([2, math.pi / 2])
     hessian = hessian_matrix(example_function_2, point)
     print("Hessian matrix at point {}: \n{}".format(point, hessian))
+
+    """ Testing dominant eigenvalue: """
+    print("\n\n\n")
+    test_matrix = np.array([[6, 5], [4, 5]])
+    dom_eigen: float = calc_dominant_eigenvalue_of_matrix(test_matrix, 0.001)
+    print(dom_eigen)
+    print("\n\n\n")
+    print(np.linalg.cholesky(test_matrix))

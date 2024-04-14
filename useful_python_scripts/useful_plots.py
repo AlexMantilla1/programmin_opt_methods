@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List
 import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
@@ -38,4 +38,21 @@ def plot_level_curves_and_points(
     plt.title("Level Curves of f(x1, x2) and Opt Trayectory")
     plt.colorbar(label="Function Value")
     plt.grid(True)
+    plt.show()
+
+
+def plot_model_comparison(
+    input_signal: List[float],
+    output_signal: List[float],
+    output_signal_model: List[float],
+) -> None:
+    n_input = list(range(len(input_signal)))
+    n_output = list(range(len(output_signal)))
+    plt.figure
+    plt.plot(n_input, input_signal, "--s")
+    a = plt.plot(n_output, output_signal, "--o")
+    plt.plot(n_output, output_signal_model, "--d")
+    plt.grid(True)
+    plt.axis([-1, 40.0, 3.0, 7.0])
+    plt.legend(["Input", "Real Output", "Model Output"])
     plt.show()
