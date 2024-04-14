@@ -18,40 +18,44 @@ def steepest_decent_method(
     obj_function: Callable[[npt.ArrayLike], float], 
     max_iter: int = 500,
     max_step: float = 10.0,
-) -> Dict:
+) -> Dict: 
     """
-    Steepest Decent Method.
+    Steepest descent optimization algorithm.
 
     Parameters:
-    - epsilon (float): The termination scalar to define the threshold of how close is close enough for the solution.
-    - initial_point (npt.ArrayLike): The initial point for the algorithm.
-    - obj_function (Callable[[npt.ArrayLike], float]): The function we're minimizing.
-    - grad_function Callable[[npt.ArrayLike], npt.ArrayLike]: The function that evaluates 
-    - num_dim (int): The number of dimensions of the obj_function (in f: R^n -> R, the value of n).
-    - max_iter (int): Max number of iterations allowed to converge. Default is 500.
-    - max_step (float): Every iteration will have a step in every dimension, this defines the maximum step. Default is 10.0.
+        epsilon (float): Convergence criterion. Terminate when the magnitude of the gradient
+                         is less than epsilon.
+        initial_point (array_like): Initial guess for the optimal solution.
+        obj_function (callable): The objective function to minimize.
+        max_iter (int, optional): Maximum number of iterations. Defaults to 500.
+        max_step (float, optional): Maximum step size for the golden section search. Defaults to 10.0.
 
     Returns:
-    - Dict: A dictionary containing the result of the optimization process, including 'value' (the optimized point), 'converged' (boolean indicating convergence), 'iterations' (number of iterations performed), and 'trayectory' (List of all points explored during the optimization).
+        dict: A dictionary containing:
+              - 'value': The optimized solution.
+              - 'converged': Boolean indicating if the algorithm converged.
+              - 'iterations': Number of iterations performed.
+              - 'trayectory': List of all points visited during optimization.
     """
+
     # Set up
     iterations: int = 0
     last_point: npt.ArrayLike = initial_point.copy()
-    all_points_trayectory = [initial_point]
+    all_points_trayectory: List[npt.ArrayLike] = [initial_point]
 
     while iterations < max_iter:
 
         iterations += 1
-        # 1. Exploratory search
+        # Exploratory search
         new_point: npt.ArrayLike = last_point.copy()
         # Calculate the gradient in the point
-        gradient: npt.ArrayLike = gradient_of_fun_in_point(obj_function,new_point)
+        gradient: npt.ArrayLike = gradient_of_fun_in_point(obj_function, new_point)
         # End the algorithm if the magnitude of the gradient is lower that epsilon
         magnitude: float = np.linalg.norm(gradient)
         if magnitude < epsilon:
             break
-        # If gradient is large enough define the direction of the gradient
-        direction: npt.ArrayLike = (-1.0/magnitude)*gradient
+        # If gradient is large enough, define the direction of the gradient
+        direction: npt.ArrayLike = (-1.0 / magnitude) * gradient
         # Perform golden section search along this direction
         solution: Dict = get_solution_by_golden_section_method(
             epsilon / 4,
@@ -64,12 +68,12 @@ def steepest_decent_method(
         if not solution["converged"]:
             solution["trayectory"] = all_points_trayectory
             return solution
-        # Move the point the dir_index dimention by the opt solution found
-        new_point = new_point + solution["value"]*direction
-        # Add the point to the trayectory
+        # Move the point along the direction found by the golden section search
+        new_point = new_point + solution["value"] * direction
+        # Add the point to the trajectory
         all_points_trayectory.append(new_point.copy())
 
-        # update for next hooke_and_jeeves iteration
+        # Update for next iteration
         last_point = new_point.copy()
 
     # Check if max iterations achieved

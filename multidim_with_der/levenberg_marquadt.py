@@ -3,24 +3,51 @@ import numpy as np
 import numpy.typing as npt 
 # Import my functionalities:
 import sys
-sys.path.append("../useful_python_scripts/") 
-from golden_section_method_Rn import get_solution_by_golden_section_method
+sys.path.append("../useful_python_scripts/")  
 from useful_plots import plot_level_curves_and_points
 from derivative_funcitons import gradient_of_fun_in_point, hessian_matrix
-  
-def newton_method(
+ 
+"""
+
+"""
+
+def forward_substitution(L, b):
+    """
+    Solves the linear system Lx = b for x using forward substitution,
+    where L is a lower triangular matrix.
+    """
+    n = L.shape[0]
+    x = np.zeros_like(b, dtype=float)
+    for i in range(n):
+        x[i] = (b[i] - np.dot(L[i, :i], x[:i])) / L[i, i]
+    return x
+
+def backward_substitution(U, b):
+    """
+    Solves the linear system Ux = b for x using backward substitution,
+    where U is an upper triangular matrix.
+    """
+    n = U.shape[0]
+    x = np.zeros_like(b, dtype=float)
+    for i in range(n-1, -1, -1):
+        x[i] = (b[i] - np.dot(U[i, i+1:], x[i+1:])) / U[i, i]
+    return x
+
+def levenberg_marquadt(
     epsilon: float,
     initial_point: npt.ArrayLike,
-    obj_function: Callable[[npt.ArrayLike], float], 
+    delta: float,
+    obj_function: Callable[[npt.ArrayLike], float],  
     max_iter: int = 500, 
 ) -> Dict:
     """
-    Newton's method for optimizing a multidimensional function.
+    Levenberg-Marquardt optimization algorithm for minimizing a function.
 
     Parameters:
         epsilon (float): Convergence criterion. Terminate when the magnitude of the new movement
                          is less than epsilon.
         initial_point (array_like): Initial guess for the optimal solution.
+        delta (float): Initial value for the parameter delta. (expected to be short)
         obj_function (callable): The objective function to minimize.
         max_iter (int, optional): Maximum number of iterations. Defaults to 500.
 
@@ -37,28 +64,45 @@ def newton_method(
     last_point: npt.ArrayLike = initial_point.copy()
     all_points_trayectory: List[npt.ArrayLike] = [initial_point]
 
-    while iterations < max_iter: 
-        # Define the new_point with initial value
-        new_point: npt.ArrayLike = last_point.copy()
+    while iterations < max_iter:  
         # Calculate the gradient in the point
-        gradient: npt.ArrayLike = gradient_of_fun_in_point(obj_function, new_point)
+        gradient: npt.ArrayLike = gradient_of_fun_in_point(obj_function, last_point)
         # Calculate the hessian matrix of the fun in the point
-        hessian: npt.ArrayLike = hessian_matrix(obj_function, new_point)
-        # Calculate the inverse of the Hessian matrix
-        inv_hessian: npt.ArrayLike = np.linalg.inv(hessian)
-        # Calculate the next movement of the point using the Newton's method formula
-        new_mov: npt.ArrayLike = np.matmul(gradient, inv_hessian)
+        hessian: npt.ArrayLike = hessian_matrix(obj_function, last_point)
+
+        # Calculate B^-1 = delta*I + H(xk)
+        B_m1 = delta*np.eye(len(hessian)) + hessian
+        # Cholesky factorization
+        L = np.linalg.cholesky(B_m1) 
+        # Solve LL' (X_{k+l} - X_k) = -vf(x_k) for X_{k+l}
+        Y: npt.ArrayLike = forward_substitution(L, -1*gradient)         #vec
+        new_point: npt.ArrayLike = backward_substitution(L.T, Y) + last_point
+
+        # Add the point to the trayectory
+        all_points_trayectory.append(new_point.copy())  
+
+        # Compute f(x_{k+1}), f(x_k) and ratio R_k
+        f_k = obj_function(last_point)
+        f_kl = obj_function(new_point)
+        q_k = f_k + np.dot(gradient, new_point - last_point) + 0.5 * np.dot(np.dot((new_point - last_point).T, hessian), new_point - last_point)
+        q_kl = f_kl
+        R_k = (f_k - f_kl) / (q_k - q_kl)
+
+        # Update ep_k+l based on R_k
+        if R_k < 0.25:
+            delta *= 4
+        elif R_k > 0.75:
+            delta /= 2
+ 
+        # Calculate the next movement of the point
+        new_mov: npt.ArrayLike = new_point - last_point
         # End the algorithm if the magnitude of the new movement is lower that epsilon
         magnitude: float = np.linalg.norm(new_mov)
         if magnitude < epsilon:
-            break
-        # Move the point along the direction found by the Newton's method
-        new_point = new_point - new_mov
-        # Add the point to the trayectory
-        all_points_trayectory.append(new_point.copy()) 
-        # Update for next iteration
+            break 
+        # update for next levenberg_marquadt iteration
         last_point = new_point.copy()
-        # Increment the iteration count
+        # cont the iteration
         iterations += 1
 
     # Check if max iterations achieved
@@ -99,7 +143,7 @@ def main() -> None:
     # The function to minize:
     fun = function_R2 
     # Call the function for cyclic coordinate algorithm using golden section method.
-    solution: Dict = newton_method(epsilon, initial_point, fun)
+    solution: Dict = levenberg_marquadt(epsilon, initial_point, 0.5, fun)
     # Just print solution
     print(f"The solution is: {solution["value"]}")
     # Print the trayectory length
