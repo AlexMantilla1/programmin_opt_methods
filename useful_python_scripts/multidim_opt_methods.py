@@ -17,8 +17,7 @@ def steepest_decent_method(
     epsilon: float,
     initial_point: npt.ArrayLike,
     obj_function: Callable[[npt.ArrayLike], float],
-    max_iter: int = 500,
-    max_step: float = 10.0,
+    max_iter: int = 100,
 ) -> Dict:
     """
     Steepest descent optimization algorithm.
@@ -41,6 +40,7 @@ def steepest_decent_method(
 
     # Set up
     iterations: int = 0
+    max_step: float = 50.0
     last_point: npt.ArrayLike = initial_point.copy()
     all_points_trayectory: List[npt.ArrayLike] = [initial_point]
 
@@ -91,7 +91,7 @@ def newton_method(
     epsilon: float,
     initial_point: npt.ArrayLike,
     obj_function: Callable[[npt.ArrayLike], float],
-    max_iter: int = 500,
+    max_iter: int = 100,
 ) -> Dict:
     """
     Newton's method for optimizing a multidimensional function.
@@ -154,9 +154,7 @@ def davidson_fletcer_powell(
     epsilon: float,
     initial_point: npt.ArrayLike,
     obj_function: Callable[[npt.ArrayLike], float],
-    initial_D_matrix: npt.ArrayLike,
-    max_iter: int = 500,
-    max_step: float = 50.0,
+    max_iter: int = 100,
 ) -> Dict:
     """
     Davidson-Fletcher-Powell optimization algorithm.
@@ -179,6 +177,8 @@ def davidson_fletcer_powell(
     """
 
     # Set up
+    initial_D_matrix: npt.ArrayLike = np.eye(len(initial_point))
+    max_step: float = 50.0
     iterations: int = 0
     last_point: npt.ArrayLike = initial_point.copy()
     all_points_trayectory: List[npt.ArrayLike] = [initial_point]
@@ -254,9 +254,8 @@ def davidson_fletcer_powell(
 def levenberg_marquadt(
     epsilon: float,
     initial_point: npt.ArrayLike,
-    delta: float,
     obj_function: Callable[[npt.ArrayLike], float],
-    max_iter: int = 500,
+    max_iter: int = 100,
 ) -> Dict:
     """
     Levenberg-Marquardt optimization algorithm for minimizing a function.
@@ -278,6 +277,7 @@ def levenberg_marquadt(
     """
 
     # Set up
+    delta: float = 0.5
     iterations: int = 0
     last_point: npt.ArrayLike = initial_point.copy()
     all_points_trayectory: List[npt.ArrayLike] = [initial_point]
