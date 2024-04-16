@@ -277,7 +277,8 @@ def levenberg_marquadt(
     """
 
     # Set up
-    delta: float = 0.5
+    initial_delta: float = 0.3
+    delta: float = initial_delta
     iterations: int = 0
     last_point: npt.ArrayLike = initial_point.copy()
     all_points_trayectory: List[npt.ArrayLike] = [initial_point]
@@ -287,11 +288,16 @@ def levenberg_marquadt(
         gradient: npt.ArrayLike = gradient_of_fun_in_point(obj_function, last_point)
         # Calculate the hessian matrix of the fun in the point
         hessian: npt.ArrayLike = hessian_matrix(obj_function, last_point)
-
-        # Calculate B^-1 = delta*I + H(xk)
-        B_m1 = delta * np.eye(len(hessian)) + hessian
-        # Cholesky factorization
-        L = np.linalg.cholesky(B_m1)
+        while True:
+            try:
+                # Calculate B^-1 = delta*I + H(xk)
+                B_m1 = delta * np.eye(len(hessian)) + hessian
+                # Cholesky factorization
+                L = np.linalg.cholesky(B_m1)
+                break
+            except np.linalg.LinAlgError:
+                delta *= 4
+        # print(delta)
         # Solve LL' (X_{k+l} - X_k) = -vf(x_k) for X_{k+l}
         Y: npt.ArrayLike = forward_substitution(L, -1 * gradient)  # vec
         new_point: npt.ArrayLike = backward_substitution(L.T, Y) + last_point
@@ -322,7 +328,14 @@ def levenberg_marquadt(
         # Calculate the next movement of the point
         new_mov: npt.ArrayLike = new_point - last_point
         # End the algorithm if the magnitude of the new movement is lower that epsilon
-        magnitude: float = np.linalg.norm(new_mov)
+        print(
+            f"{iterations}: |gradient| = {np.linalg.norm(gradient_of_fun_in_point(obj_function, new_point))}\n",
+            f"delta = {delta}",
+        )
+        # magnitude: float = np.linalg.norm(new_mov)
+        magnitude: float = np.linalg.norm(
+            gradient_of_fun_in_point(obj_function, new_point)
+        )
         if magnitude < epsilon:
             break
         # update for next levenberg_marquadt iteration
@@ -337,4 +350,5 @@ def levenberg_marquadt(
         "converged": is_good_sol,
         "iterations": iterations,
         "trayectory": all_points_trayectory,
+        "initial_delta": initial_delta,
     }

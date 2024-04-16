@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-def forward_substitution(L, b):
+def forward_substitution(L: npt.ArrayLike, b: npt.ArrayLike) -> npt.ArrayLike:
     """
     Solves the linear system Lx = b for x using forward substitution,
     where L is a lower triangular matrix.
@@ -12,10 +12,10 @@ def forward_substitution(L, b):
     x = np.zeros_like(b, dtype=float)
     for i in range(n):
         x[i] = (b[i] - np.dot(L[i, :i], x[:i])) / L[i, i]
-    return x
+    return np.array(x)
 
 
-def backward_substitution(U, b):
+def backward_substitution(U: npt.ArrayLike, b: npt.ArrayLike) -> npt.ArrayLike:
     """
     Solves the linear system Ux = b for x using backward substitution,
     where U is an upper triangular matrix.
@@ -24,7 +24,7 @@ def backward_substitution(U, b):
     x = np.zeros_like(b, dtype=float)
     for i in range(n - 1, -1, -1):
         x[i] = (b[i] - np.dot(U[i, i + 1 :], x[i + 1 :])) / U[i, i]
-    return x
+    return np.array(x)
 
 
 def calc_dominant_eigenvalue_of_matrix(

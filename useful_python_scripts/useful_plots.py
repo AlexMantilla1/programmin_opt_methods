@@ -53,6 +53,6 @@ def plot_model_comparison(
     a = plt.plot(n_output, output_signal, "--o")
     plt.plot(n_output, output_signal_model, "--d")
     plt.grid(True)
-    plt.axis([-1, 40.0, 3.0, 7.0])
+    plt.axis([50.0, 100.0, 3.0, 7.0])
     plt.legend(["Input", "Real Output", "Model Output"])
     plt.show()
