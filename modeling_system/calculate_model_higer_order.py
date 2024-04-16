@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List
+from typing import Dict, List
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -41,22 +41,22 @@ def get_data() -> List[List]:
     output_signal = df["output"].tolist()
 
     # Return the data
-    # return [input_signal[800:1000], output_signal[800:1000]]
+    # return [input_signal[000:200], output_signal[000:200]]
     return [input_signal, output_signal]
 
 
 def evaluate_output_using_model(
     system_model: npt.ArrayLike, input_signal: List[float], initial_condition: float
 ) -> List[float]:
-    if not len(system_model) == 4:
-        print(f"Warning! length of model: {len(system_model)} (expected 4!)")
+    # get the order
+    order: int = int(len(system_model) / 2)
 
     # First two values are n=-2 and n=-1 (This assumes steady state with initial condition)
-    extended_output = [initial_condition, initial_condition]
-    extended_input = [input_signal[0], input_signal[0]] + input_signal
-    for n in np.arange(2, len(extended_input)):
+    extended_output: List[float] = order * [initial_condition]
+    extended_input: List[float] = (order * [input_signal[0]]) + input_signal
+    for n in np.arange(order, len(extended_input)):
 
-        # The values that affect the output:
+        """# The values that affect the output:
         interest_window: npt.ArrayLike = np.array(
             [
                 -extended_output[n - 1],
@@ -64,13 +64,22 @@ def evaluate_output_using_model(
                 extended_input[n - 1],
                 extended_input[n - 2],
             ]
-        )
+        )"""
+        # Create the window that affects the output at n
+        interest_window: List[float] = []
+        for i in np.arange(order):
+            interest_window.append(-extended_output[n - i - 1])
+        for i in np.arange(order):
+            interest_window.append(extended_input[n - i - 1])
+
         # The n-th value of the output is
+        # print(len(interest_window))
+        # print(interest_window)
         extended_output.append(np.dot(system_model, interest_window))
 
     # print(f"len(extended_input[2:]) -> {len(extended_input[2:])}")
     # print(f"len(extended_output[2:]) -> {len(extended_output[2:])}")
-    return extended_output[2:]
+    return extended_output[order:]
 
 
 def calculate_cuadratic_mean_error(
@@ -157,7 +166,17 @@ def main() -> None:
 
     # Define an arbitrary initial point for training
     initial_model: npt.ArrayLike = np.array(
-        [-1.5054493, 0.57916328, -0.04113794, 0.11164111]
+        [
+            -1.47758376,
+            0.63444572,
+            -0.03953152,
+            -0.02307469,
+            -0.0069757,
+            0.01976465,
+            0.05790899,
+            0.01941009,
+        ]
+        # [1, 1, 1, 1]
     )
     # Define the objective function to optimize
     obj_function = objective_function
