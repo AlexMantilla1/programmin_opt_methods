@@ -41,8 +41,8 @@ def get_data() -> List[List]:
     output_signal = df["output"].tolist()
 
     # Return the data
-    # return [input_signal[000:200], output_signal[000:200]]
-    return [input_signal, output_signal]
+    return [input_signal[000:200], output_signal[000:200]]
+    # return [input_signal, output_signal]
 
 
 def evaluate_output_using_model(
@@ -73,13 +73,41 @@ def evaluate_output_using_model(
             interest_window.append(extended_input[n - i - 1])
 
         # The n-th value of the output is
-        # print(len(interest_window))
-        # print(interest_window)
         extended_output.append(np.dot(system_model, interest_window))
 
-    # print(f"len(extended_input[2:]) -> {len(extended_input[2:])}")
-    # print(f"len(extended_output[2:]) -> {len(extended_output[2:])}")
     return extended_output[order:]
+
+
+def evaluate_output_using_model_v2(
+    system_model: npt.ArrayLike, input_signal: List[float], output_signal: List[float]
+) -> List[float]:
+    # get the order
+    order: int = int(len(system_model) / 2)
+
+    # First two values are n=-2 and n=-1 (This assumes steady state with initial condition)
+    model_output: List[float] = output_signal[0:order].copy()
+    for n in np.arange(order, len(input_signal)):
+
+        """# The values that affect the output:
+        interest_window: npt.ArrayLike = np.array(
+            [
+                -extended_output[n - 1],
+                -extended_output[n - 2],
+                extended_input[n - 1],
+                extended_input[n - 2],
+            ]
+        )"""
+        # Create the window that affects the output at n
+        interest_window: List[float] = []
+        for i in np.arange(order):
+            interest_window.append(-output_signal[n - i - 1])
+        for i in np.arange(order):
+            interest_window.append(input_signal[n - i - 1])
+
+        # The n-th value of the output is
+        model_output.append(np.dot(system_model, interest_window))
+
+    return model_output
 
 
 def calculate_cuadratic_mean_error(
@@ -104,6 +132,9 @@ def objective_function(test_model: npt.ArrayLike) -> float:
     output_signal_model = evaluate_output_using_model(
         test_model, input_signal, output_signal[0]
     )
+    # output_signal_model = evaluate_output_using_model_v2(
+    #    test_model, input_signal, output_signal
+    # )
     # Return the cuadratic mean error
     return calculate_cuadratic_mean_error(output_signal_model, output_signal)
 
@@ -143,10 +174,12 @@ def test_model(model_to_test: npt.ArrayLike) -> None:
     # Reading data:
     input_signal, output_signal = get_all_data()
 
-    # Evaluate output with model
     output_signal_model = evaluate_output_using_model(
         model_to_test, input_signal, output_signal[0]
     )
+    # output_signal_model = evaluate_output_using_model_v2(
+    #    model_to_test, input_signal, output_signal
+    # )
 
     # Calculate objective function (cuadratic mean error)
     function_value = calculate_cuadratic_mean_error(output_signal_model, output_signal)
@@ -162,21 +195,11 @@ def test_model(model_to_test: npt.ArrayLike) -> None:
 
 def main() -> None:
     # Reading data:
-    input_signal, output_signal = get_data()
+    # input_signal, output_signal = get_data()
 
     # Define an arbitrary initial point for training
     initial_model: npt.ArrayLike = np.array(
-        [
-            -1.47758376,
-            0.63444572,
-            -0.03953152,
-            -0.02307469,
-            -0.0069757,
-            0.01976465,
-            0.05790899,
-            0.01941009,
-        ]
-        # [1, 1, 1, 1]
+        [-1.5054493, 0.57916328, -0.04113794, 0.11164111]
     )
     # Define the objective function to optimize
     obj_function = objective_function
@@ -190,16 +213,6 @@ def main() -> None:
     )
     if not solution["converged"]:
         print("WARNING!!! method didn't converge")
-
-        """print("Error! method didn't converge")
-        print(solution)
-        print(f"f = {objective_function(solution["value"])}")
-        # Evaluate output with model
-        output_signal_model = evaluate_output_using_model(
-            solution["value"], input_signal, output_signal[0]
-        )
-        print(f"R_2 = {cal_det_coef(output_signal,output_signal_model)}")
-        return"""
 
     system_model: npt.ArrayLike = solution["value"]
     # Erase trayectory for confort
@@ -215,4 +228,4 @@ if __name__ == "__main__":
     # model_to_test: npt.ArrayLike = np.array(
     #    [-1.50323926, 0.57722442, -0.04175521, 0.11251785]
     # )
-    # test_model(np.array([-1.507, 0.58, -0.043, 0.1155]))
+    # test_model(np.array([-0.39587865, -0.49787017, 0.00302282, 0.10024205]))

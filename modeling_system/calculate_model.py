@@ -153,7 +153,7 @@ def test_model(model_to_test: npt.ArrayLike) -> None:
 
 def main() -> None:
     # Reading data:
-    input_signal, output_signal = get_data()
+    # input_signal, output_signal = get_data()
 
     # Define an arbitrary initial point for training
     initial_model: npt.ArrayLike = np.array(
