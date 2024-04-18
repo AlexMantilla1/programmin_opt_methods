@@ -199,7 +199,7 @@ def main() -> None:
 
     # Define an arbitrary initial point for training
     initial_model: npt.ArrayLike = np.array(
-        [-1.5054493, 0.57916328, -0.04113794, 0.11164111]
+        [-1.50679337, 0.57994944, -0.04300483, 0.11451339]
     )
     # Define the objective function to optimize
     obj_function = objective_function
