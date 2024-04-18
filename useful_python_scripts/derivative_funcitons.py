@@ -45,6 +45,47 @@ def calc_dominant_eigenvalue_of_matrix(
     return eigenvalue
 
 
+def calculate_new_D_matrix_BFGS(
+    D_matrix: npt.ArrayLike, p_j: npt.ArrayLike, q_j: npt.ArrayLike
+) -> npt.ArrayLike:
+    """
+    Calculate the updated D matrix for the Broyden-Fletcher-Goldfarb-Shanno (BFGS) multivariable optimization method.
+
+    Parameters:
+    - D_matrix (array-like): The current D matrix, a symmetric positive definite matrix.
+    - p_j (array-like): The change in the parameters vector between iterations.
+    - q_j (array-like): The change in the gradient vector between iterations.
+
+    Returns:
+    - new_D_matrix (array-like): The updated D matrix after applying the DFP method.
+    """
+
+    # First term to add
+    first_num = np.outer(p_j, p_j)  # matrix
+    first_den = np.dot(p_j, q_j)  # scalar
+    first = (1 / first_den) * first_num  # matrix
+
+    # Second term to add
+    second_num_a = np.matmul(D_matrix, q_j)  # vector
+    second_num_b = np.matmul(q_j, D_matrix)  # vector
+    second_num = np.outer(second_num_a, second_num_b)  # matrix
+    second_den = np.matmul(second_num_a, q_j)  # scalar
+    second = (1 / second_den) * second_num  # matrix
+
+    # Adding to calculate new D matrix
+    new_D_matrix = D_matrix + first - second  # matrix
+
+    # Calculate C_BFGS
+    # First term
+    first_a = first
+    first_b = 1 + ((1 / first_den) * second_den)
+    first = first_a * first_b
+    second_a = np.outer(second_num_a, p_j)
+    second = (1 / first_den) * (second_a + second_a.T)
+
+    return new_D_matrix
+
+
 def calculate_new_D_matrix(
     D_matrix: npt.ArrayLike, p_j: npt.ArrayLike, q_j: npt.ArrayLike
 ) -> npt.ArrayLike:
