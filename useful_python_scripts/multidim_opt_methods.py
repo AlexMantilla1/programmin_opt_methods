@@ -285,6 +285,8 @@ def levenberg_marquadt(
     all_points_trayectory: List[npt.ArrayLike] = [initial_point]
 
     while iterations < max_iter:
+        # cont the iteration
+        iterations += 1
         # Calculate the gradient in the point
         gradient: npt.ArrayLike = gradient_of_fun_in_point(obj_function, last_point)
         # Calculate the hessian matrix of the fun in the point
@@ -331,7 +333,7 @@ def levenberg_marquadt(
         # End the algorithm if the magnitude of the new movement is lower that epsilon
         print(
             f"{iterations}: |gradient| = {np.linalg.norm(gradient_of_fun_in_point(obj_function, new_point))}\n",
-            f"delta = {delta}",
+            # f"delta = {delta}",
         )
         # magnitude: float = np.linalg.norm(new_mov)
         magnitude: float = np.linalg.norm(
@@ -341,8 +343,6 @@ def levenberg_marquadt(
             break
         # update for next levenberg_marquadt iteration
         last_point = new_point.copy()
-        # cont the iteration
-        iterations += 1
 
     # Check if max iterations achieved
     is_good_sol: bool = iterations < max_iter

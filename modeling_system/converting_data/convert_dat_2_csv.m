@@ -4,8 +4,11 @@ load dryer.dat
 input = dryer(:,1);
 output = dryer(:,2);
 
-plot(input)
+input = input - mean(input);
+output = output - mean(output);
 figure
+plot(input)
+hold on
 plot(output)
 
 Data = table(input,output);
