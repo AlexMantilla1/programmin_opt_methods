@@ -122,25 +122,24 @@ def calculate_new_D_matrix(
 def derivate_fun_in_point_and_dir(
     fun: Callable[[npt.ArrayLike], float],
     point: npt.ArrayLike,
-    dir: npt.ArrayLike,
+    direction: npt.ArrayLike,
     epsilon: float = 1e-6,
 ) -> float:
     """
     Approximate the value of the derivative of a function at a given point in a given direction using central difference method.
     """
-    # Check the dir has unitary mag
-    if not np.linalg.norm(dir) == 1.0:
-        dir = (1 / np.linalg.norm(dir)) * dir
+    # Check the direction has unitary mag
+    if not np.linalg.norm(direction) == 1.0:
+        direction = (1 / np.linalg.norm(direction)) * direction
 
-    point_left: npt.ArrayLike = point - (epsilon * dir)
-    point_right: npt.ArrayLike = point + (epsilon * dir)
+    point_left: npt.ArrayLike = point - (epsilon * direction)
+    point_right: npt.ArrayLike = point + (epsilon * direction)
 
     return (fun(point_right) - fun(point_left)) / (2 * epsilon)
 
 
 def gradient_of_fun_in_point(
-    fun: Callable[[npt.ArrayLike], float],
-    point: npt.ArrayLike,
+    fun: Callable[[npt.ArrayLike], float], point: npt.ArrayLike, epsilon=1e-6
 ) -> npt.ArrayLike:
     """
     Approximate the value of the gradient of a function at a given point using central difference method for df.
@@ -151,7 +150,10 @@ def gradient_of_fun_in_point(
     directions: List = list(np.eye(num_dim))
     # Calculate the gradient by derivating in each direction
     gradient = np.array(
-        [derivate_fun_in_point_and_dir(fun, point, dir) for dir in directions]
+        [
+            derivate_fun_in_point_and_dir(fun, point, direction, epsilon)
+            for direction in directions
+        ]
     )
     return gradient
 
