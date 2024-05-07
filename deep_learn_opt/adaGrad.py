@@ -66,29 +66,28 @@ def loss_function(model: List[float]) -> float:
     return calculate_cuadratic_mean_error(output_signal_model, y_data)
 
 
-def stochastic_gradient_descent_momentum(
+def adaGrad_method(
     epsilon: float,
-    initial_model: List[float],
+    initial_theta: List[float],
     obj_loss_function: Callable[[List[float]], float],
     max_iter: int = 100,
 ) -> Dict:
     # For learning rate
-    ep_0 = 1e-6 
+    ep_0 = 0.1
     sigma = 1e-7
 
+    # Initializations for algorithm
+    theta = np.array(initial_theta) 
+    r = np.zeros(len(theta))
+     
     # Numerical Initializations
     grad_magnitude: float = 1000 * epsilon
-    iterations = 0
-    order = len(initial_model)
-
-    # Initializations for algorithm
-    model = np.array(initial_model) 
-    best_model = np.copy(model)
-    r = np.zeros(len(model))
-    mini_batch_size: int = 1000
-    num_batches: int = int(len(input_signal) / mini_batch_size) 
-    
+    iterations = 0 
+    best_theta = np.copy(theta)
+    mini_batch_size: int = 200
+    num_batches: int = int(len(input_signal) / mini_batch_size)  
     global x_data, y_data
+    
     # Start loop
     while (grad_magnitude > epsilon) and (iterations < max_iter):
         iterations = iterations + 1
@@ -96,23 +95,27 @@ def stochastic_gradient_descent_momentum(
             # 1. get minibatch
             x_data = input_signal[k * mini_batch_size : (k + 1) * mini_batch_size]
             y_data = output_signal[k * mini_batch_size : (k + 1) * mini_batch_size]
-            # 2. approximate gradient of loss_function at model
-            grad = gradient_of_fun_in_point(obj_loss_function, model, ep_0)
-            grad_magnitude = np.linalg.norm(grad) 
+            # 2. approximate gradient of loss_function at theta
+            grad = gradient_of_fun_in_point(obj_loss_function, theta, ep_0/1000)
+            grad_magnitude = np.linalg.norm(grad)
             # 3. Accumulate squared gradient 
             r = r + (grad * grad) 
             # 4. Compute update:
-            delta_theta = (ep_0 / (sigma + np.sqrt(r))) * grad 
+            delta_theta = (-ep_0 / (sigma + np.sqrt(r))) * grad 
             # 5. Apply update
-            model = model + delta_theta 
-            if obj_loss_function(model) < obj_loss_function(best_model):
-                best_model = np.copy(model) 
+            theta = theta + delta_theta 
+            # 6. get the best theta calculated
+            x_data = input_signal.copy()
+            y_data = output_signal.copy() 
+            if obj_loss_function(theta) < obj_loss_function(best_theta):
+                best_theta = np.copy(theta) 
+            # 7. update for new iteration
             iterations = iterations + 1
             if iterations > max_iter:
                 iterations = iterations - 1
-                break 
+                break
 
-    return {"value": list(best_model), "iterations": iterations}
+    return {"value": list(best_theta), "iterations": iterations}
 
 
 def main() -> None:
@@ -120,10 +123,11 @@ def main() -> None:
     # initial_model = [-1.50679337, 0.57994944, -0.04300483, 0.11451339]
     # initial_model = [-1.506, 0.579, -0.043, 0.114]
     initial_model = [-1.4, 0.6, -0.1, 0.2]
+    # initial_model = [0.1, 0.1, -0.1, -0.1]
     print(f"initial model: {initial_model}")
     # Call function to run Stochastic gradient descent (SGD)
-    solution: Dict = stochastic_gradient_descent_momentum(
-        0.001, initial_model, loss_function, 100
+    solution: Dict = adaGrad_method(
+        0.001, initial_model, loss_function, 2000
     )
     sol = solution["value"]
     print(f"Solution achieved: {sol}") 

@@ -66,51 +66,66 @@ def loss_function(model: List[float]) -> float:
     return calculate_cuadratic_mean_error(output_signal_model, y_data)
 
 
-def stochastic_gradient_descent(
+def Adam_method(
     epsilon: float,
     initial_theta: List[float],
     obj_loss_function: Callable[[List[float]], float],
     max_iter: int = 100,
 ) -> Dict:
-    # For learning 
-    ep_0 = 1e-3
+    # For learning
+    step_size = 0.001       # step size (called "E" in book)
+    p1 = 0.9                # Exponential decay rate p1
+    p2 = 0.999              # Exponential decay rate p2
+    sigma = 1e-8            # Small constant used to stabilize division by small numbers  
 
     # Initializations for algorithm
-    theta = np.array(initial_theta)
+    theta = np.array(initial_theta)     # initial theta 
+    s = np.zeros(len(theta))            # initial s
+    r = np.zeros(len(theta))            # initial r
+    t: int = 0                          # time step
 
     # Numerical Initializations
-    grad_magnitude: float = 1000 * epsilon
-    iterations = 0
+    grad_magnitude: float = 1000 * epsilon      # just to start the loop
+    iterations = 0 
+    best_theta = np.copy(theta)         # to save the best theta
     mini_batch_size: int = 200
-    num_batches: int = int(len(input_signal) / mini_batch_size)
-    best_theta = np.copy(theta)
-    global x_data, y_data 
-
+    num_batches: int = int(len(input_signal) / mini_batch_size)  
+    global x_data, y_data
+    
     # Start loop
     while (grad_magnitude > epsilon) and (iterations < max_iter):
         iterations = iterations + 1
         for k in np.arange(num_batches):
             # 1. get minibatch
             x_data = input_signal[k * mini_batch_size : (k + 1) * mini_batch_size]
-            y_data = output_signal[k * mini_batch_size : (k + 1) * mini_batch_size]
-            # 3. get learning rate (e_k)
-            alpha = iterations / max_iter
-            e_k = (1 - alpha) * (ep_0) + alpha * (ep_0 * 0.01)
-            # 2. approximate gradient of loss_function at theta
-            grad = gradient_of_fun_in_point(obj_loss_function, theta, e_k)
+            y_data = output_signal[k * mini_batch_size : (k + 1) * mini_batch_size] 
+            # 2. approximate gradient of loss_function at theta_weird
+            grad = gradient_of_fun_in_point(obj_loss_function, theta, epsilon/10) 
             grad_magnitude = np.linalg.norm(grad)
-            # 4. update theta
-            theta = theta - (e_k * grad) 
-            # 5. get the best theta calculated
+            # 3. update time
+            t = t + 1
+            # 4. Update biased ﬁrst moment estimate 
+            s = p1*s + (1-p1)*grad
+            # 5. Update biased second moment estimate
+            r = p2*r + ( (1 - p2)*(grad * grad) )
+            # 6. Correct bias in ﬁrst moment
+            s_hat = s / (1 - (p1**t))
+            # 7. Correct bias in second moment
+            r_hat = r / (1 - (p2**t))
+            # 8. Compute update: 
+            delta_theta = - step_size * ( s_hat / (np.sqrt(r_hat) + sigma) )
+            # 9. Apply update
+            theta = theta + delta_theta 
+            # 10. get the best theta calculated
             x_data = input_signal.copy()
-            y_data = output_signal.copy()
+            y_data = output_signal.copy() 
             if obj_loss_function(theta) < obj_loss_function(best_theta):
                 best_theta = np.copy(theta) 
-            # 6. update for new iteration
+            # 11. update for new iteration
             iterations = iterations + 1
             if iterations > max_iter:
                 iterations = iterations - 1
-                break
+                break 
 
     return {"value": list(best_theta), "iterations": iterations}
 
@@ -123,7 +138,7 @@ def main() -> None:
     # initial_model = [0.1, 0.1, -0.1, -0.1]
     print(f"initial model: {initial_model}")
     # Call function to run Stochastic gradient descent (SGD)
-    solution: Dict = stochastic_gradient_descent(
+    solution: Dict = Adam_method(
         0.001, initial_model, loss_function, 2000
     )
     sol = solution["value"]
@@ -142,7 +157,7 @@ if __name__ == "__main__":
     # Get data to compare
     input_signal, output_signal = get_data()
     # for minibatches
-    x_data = input_signal.copy()
-    y_data = output_signal.copy()
+    x_data = input_signal
+    y_data = output_signal
     # Run the main function
     main()

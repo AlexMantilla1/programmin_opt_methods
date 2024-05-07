@@ -66,26 +66,30 @@ def loss_function(model: List[float]) -> float:
     return calculate_cuadratic_mean_error(output_signal_model, y_data)
 
 
-def stochastic_gradient_descent(
+def RMSProp_nesterov(
     epsilon: float,
     initial_theta: List[float],
     obj_loss_function: Callable[[List[float]], float],
     max_iter: int = 100,
 ) -> Dict:
-    # For learning 
-    ep_0 = 1e-3
+    # For learning
+    ep_0 = 0.01  # Global learning rate
+    p = 0.5  # Decay rate
+    alpha = 0.9  # Momentum coefficient
 
     # Initializations for algorithm
     theta = np.array(initial_theta)
+    velocity = np.zeros(len(theta))
+    r = np.zeros(len(theta))
 
     # Numerical Initializations
     grad_magnitude: float = 1000 * epsilon
     iterations = 0
-    mini_batch_size: int = 200
-    num_batches: int = int(len(input_signal) / mini_batch_size)
     best_theta = np.copy(theta)
-    global x_data, y_data 
-
+    mini_batch_size: int = 200
+    num_batches: int = int(len(input_signal) / mini_batch_size) 
+    global x_data, y_data
+    
     # Start loop
     while (grad_magnitude > epsilon) and (iterations < max_iter):
         iterations = iterations + 1
@@ -93,26 +97,30 @@ def stochastic_gradient_descent(
             # 1. get minibatch
             x_data = input_signal[k * mini_batch_size : (k + 1) * mini_batch_size]
             y_data = output_signal[k * mini_batch_size : (k + 1) * mini_batch_size]
-            # 3. get learning rate (e_k)
-            alpha = iterations / max_iter
-            e_k = (1 - alpha) * (ep_0) + alpha * (ep_0 * 0.01)
-            # 2. approximate gradient of loss_function at theta
-            grad = gradient_of_fun_in_point(obj_loss_function, theta, e_k)
+            # 2. Compute interim update
+            theta_weird = theta + alpha * velocity
+            # 3. approximate gradient of loss_function at theta_weird
+            grad = gradient_of_fun_in_point(obj_loss_function, theta_weird, ep_0)
             grad_magnitude = np.linalg.norm(grad)
-            # 4. update theta
-            theta = theta - (e_k * grad) 
-            # 5. get the best theta calculated
+            # 4. Accumulate squared gradient
+            r = p * r + ((1 - p) * (grad * grad))
+            # 4. Compute update:
+            velocity = alpha * velocity - (ep_0 / np.sqrt(r)) * grad
+            # 5. Apply update
+            theta = theta + velocity
+            # 6. get the best theta calculated
             x_data = input_signal.copy()
             y_data = output_signal.copy()
             if obj_loss_function(theta) < obj_loss_function(best_theta):
-                best_theta = np.copy(theta) 
-            # 6. update for new iteration
+                best_theta = np.copy(theta)
+            # 7. update for new iteration
             iterations = iterations + 1
             if iterations > max_iter:
                 iterations = iterations - 1
                 break
 
     return {"value": list(best_theta), "iterations": iterations}
+
 
 
 def main() -> None:
@@ -123,7 +131,7 @@ def main() -> None:
     # initial_model = [0.1, 0.1, -0.1, -0.1]
     print(f"initial model: {initial_model}")
     # Call function to run Stochastic gradient descent (SGD)
-    solution: Dict = stochastic_gradient_descent(
+    solution: Dict = RMSProp_nesterov(
         0.001, initial_model, loss_function, 2000
     )
     sol = solution["value"]
@@ -142,7 +150,7 @@ if __name__ == "__main__":
     # Get data to compare
     input_signal, output_signal = get_data()
     # for minibatches
-    x_data = input_signal.copy()
-    y_data = output_signal.copy()
+    x_data = input_signal
+    y_data = output_signal
     # Run the main function
     main()
